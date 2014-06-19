@@ -33,9 +33,11 @@ def parse_sitemap_urls(sitemap):
     "Parse the URLs from a sitemap file"
     rv = []
     sitemap = urlopen(sitemap)
-    doc = parse(sitemap)
-    for url in doc.getElementsByTagName('url'):
-        rv.append(url_value(url))
+
+    if sitemap.getcode() < 400:
+        doc = parse(sitemap)
+        for url in doc.getElementsByTagName('url'):
+            rv.append(url_value(url))
     return rv
 
 def parse_sitemap_sitemaps(url):
@@ -58,30 +60,43 @@ def parse_sitemap(url):
         urls += parse_sitemap_urls(url)
     return(urls)
 
-def extract_rdfa(url, outfile=sys.stdout):
-    "Extract RDFa from a given URL"
+def extract_rdfa(url, outfile=sys.stdout, parser="rdfa", serializer="n3"):
+    """
+    Extract RDFa from a given URL
+
+    Parsers are listed at https://rdflib.readthedocs.org/en/4.1.0/plugin_parsers.html
+    Serializers are listed at https://rdflib.readthedocs.org/en/4.1.0/plugin_serializers.html
+    """
     store = None
     graph = ConjunctiveGraph()
-    graph.parse(url, format="rdfa1.1")
-    graph.serialize(destination=outfile, format="n3")
+    graph.parse(url, format=parser)
+    graph.serialize(destination=outfile, format=serializer)
 
 def main():
     import argparse
     import pprint
     import traceback
+
     parser = argparse.ArgumentParser(
         description="Crawl a sitemap.xml and extract RDFa from the documents")
-    parser.add_argument('-s', '--sitemap', default=SITEMAP_URL)
-    parser.add_argument('-o', '--output', required=True)
+    parser.add_argument('-s', '--sitemap', default=SITEMAP_URL,
+        help='Location of the sitemap to parse')
+    parser.add_argument('-o', '--output', required=True,
+        help='Path / filename for the output')
+    parser.add_argument('-p', '--parser', default='rdfa1.1',
+        help='Parser to use for the input format ("rdfa", "microdata", etc)')
+    parser.add_argument('-t', '--serializer', default='n3',
+        help='Serializer to use for the output format ("n3", "nt", "turtle", "xml", etc)')
     args = parser.parse_args()
+
     errors = []
     outfile = open(args.output, 'wb')
-    urls = parse_sitemap(args.sitemap)
+    # urls = parse_sitemap(args.sitemap)
     # urls = [u'http://laurentian.concat.ca/eg/opac/record/146655?locg=105']
     urls = [u'http://find.senatehouselibrary.ac.uk/Record/.b24804241']
     for url in urls:
         try:
-            extract_rdfa(url, outfile)
+            extract_rdfa(url, outfile, args.parser, args.serializer)
         except Exception as e:
             traceback.print_exc()
 
