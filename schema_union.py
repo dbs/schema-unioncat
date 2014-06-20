@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import logging
 import sys
 
 try:
@@ -13,6 +14,8 @@ from rdflib.graph import ConjunctiveGraph
 from rdflib.namespace import RDF, RDFS, OWL, XSD
 from rdflib.parser import Parser
 from rdflib.serializer import Serializer
+
+logging.basicConfig()
 
 SITEMAP_URL = 'http://laurentian.concat.ca/osul_sitemap1.xml'
 SITEMAP_URL = 'http://laurentian.concat.ca/osul_sitemapindex.xml'
