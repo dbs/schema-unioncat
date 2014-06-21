@@ -1,4 +1,20 @@
 #!/usr/bin/env python
+
+# Copyright (C) 2014 Dan Scott <dscott@laurentian.ca>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 Proof-of-concept union catalogue via sitemaps + schema.org
 
@@ -46,11 +62,21 @@ from rdflib.namespace import RDF, RDFS, OWL, XSD
 from rdflib.parser import Parser
 from rdflib.serializer import Serializer
 
-logging.basicConfig()
-
+# Set your default sitemap URL here
 SITEMAP_URL = 'http://laurentian.concat.ca/osul_sitemap1.xml'
 SITEMAP_URL = 'http://laurentian.concat.ca/osul_sitemapindex.xml'
 SITEMAP_URL = 'http://find.senatehouselibrary.ac.uk/sitemapIndex.xml'
+
+# It would be rude to repeatedly retrieve megabytes of sitemaps from a
+# third-party site just for testing purposes.
+# If true, skip parsing the sitemaps entirely and just use the sample URLs
+SHORT_CIRCUIT = True
+SAMPLE_URLS = [
+    u'http://find.senatehouselibrary.ac.uk/Record/.b24804241',
+    u'http://acorn.biblio.org/eg/opac/record/1826746'
+]
+
+logging.basicConfig()
 
 def url_value(url):
     "Get the URL value from a given <loc> element"
@@ -124,10 +150,13 @@ def main():
     args = parser.parse_args()
 
     errors = []
+    urls = []
     outfile = open(args.output, 'wb')
-    # urls = parse_sitemap(args.sitemap)
-    # urls = [u'http://laurentian.concat.ca/eg/opac/record/146655?locg=105']
-    urls = [u'http://find.senatehouselibrary.ac.uk/Record/.b24804241']
+
+    if SHORT_CIRCUIT:
+        urls = SAMPLE_URLS
+    else:
+        urls = parse_sitemap(args.sitemap)
     for url in urls:
         try:
             extract_rdfa(url, outfile, args.parser, args.serializer)
